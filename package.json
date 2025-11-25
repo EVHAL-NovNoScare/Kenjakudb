@@ -1,0 +1,11 @@
+{
+  "name": "token-verifier",
+  "version": "1.0.0",
+  "description": "Mini Apps Token Verification",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
