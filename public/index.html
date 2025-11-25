@@ -73,76 +73,68 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        const user = tg.initDataUnsafe.user;
-        const userId = user?.id;
-        const urlParams = new URLSearchParams(window.location.search);
-        const userKey = urlParams.get('key');
-        
-        if (userKey) {
-            document.getElementById('keyText').textContent = `Key: ${userKey} - Masukkan token`;
+        const tg = window.Telegram?.WebApp;
+if (tg) {
+    tg.expand();
+}
+
+// ✅ HARCODE SEMUA DATA UNTUK TEST
+const userId = "6209084400";  // Ganti dengan user ID lu
+const userKey = "CLARISA-001"; // Ganti dengan key yang ada di Firebase
+const token = "abc123xyz";     // Ganti dengan token yang sesuai di Firebase
+
+console.log("🔧 TEST DATA:", { userId, userKey, token });
+
+// Tampilkan info
+document.getElementById('keyText').innerHTML = `
+    Key: <b>${userKey}</b><br>
+    User ID: <b>${userId}</b><br>
+    Masukkan token:
+`;
+
+// Submit handler
+document.getElementById('verifyBtn').onclick = async function() {
+    const inputToken = document.getElementById('tokenInput').value.trim();
+    
+    if (!inputToken) {
+        alert("Masukkan token dulu!");
+        return;
+    }
+
+    console.log("🚀 Mengirim ke API...", { 
+        userId: userId, 
+        userKey: userKey, 
+        token: inputToken 
+    });
+
+    try {
+        const response = await fetch('https://kenjakudatabaseapi.vercel.app/api/verify', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: userId,
+                userKey: userKey, 
+                token: inputToken
+            })
+        });
+
+        const result = await response.json();
+        console.log("📡 Response API:", result);
+
+        if (result.success) {
+            alert(`✅ BERHASIL! ${result.message}`);
+        } else {
+            alert(`❌ GAGAL: ${result.message}`);
         }
 
-        document.getElementById('verifyBtn').onclick = async function() {
-            const token = document.getElementById('tokenInput').value.trim();
-            const btn = this;
-            const status = document.getElementById('status');
-            
-            if (!token) {
-                showStatus('Masukkan token!', 'error');
-                return;
-            }
-
-            if (!userId || !userKey) {
-                showStatus('Data user tidak lengkap', 'error');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Verifying...';
-            showStatus('Mengirim ke API...', 'loading');
-
-            try {
-                const response = await fetch('/api/verify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId, userKey, token })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showStatus('✅ Token verified! Mengaktifkan bot...', 'success');
-                    btn.textContent = 'Verified!';
-                    
-                    // Send data to bot
-                    tg.sendData(JSON.stringify({
-                        action: 'token_verified',
-                        userId: userId,
-                        key: userKey,
-                        token: token
-                    }));
-                    
-                    setTimeout(() => tg.close(), 2000);
-                } else {
-                    showStatus(`❌ ${result.message}`, 'error');
-                    btn.disabled = false;
-                    btn.textContent = 'Verify Token';
-                }
-            } catch (error) {
-                showStatus('❌ Network error', 'error');
-                btn.disabled = false;
-                btn.textContent = 'Verify Token';
-            }
-        };
-
-        function showStatus(msg, type) {
-            const status = document.getElementById('status');
-            status.textContent = msg;
-            status.className = `status ${type}`;
-            status.style.display = 'block';
+    } catch (error) {
+        console.error("💥 Error:", error);
+        alert("❌ Network error! Coba lagi.");
+    }
+};
         }
     </script>
 </body>
