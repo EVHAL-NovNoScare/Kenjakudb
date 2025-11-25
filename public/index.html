@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Verification</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        p { color: #666; margin-bottom: 20px; }
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+        .success { background: #d4ffd4; color: green; }
+        .error { background: #ffd4d4; color: red; }
+        .loading { background: #fff9c4; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Verify Token</h1>
+        <p id="keyText">Masukkan token Anda</p>
+        
+        <input type="text" id="tokenInput" placeholder="Token Anda..." required>
+        <button id="verifyBtn">Verify Token</button>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        const user = tg.initDataUnsafe.user;
+        const userId = user?.id;
+        const urlParams = new URLSearchParams(window.location.search);
+        const userKey = urlParams.get('key');
+        
+        if (userKey) {
+            document.getElementById('keyText').textContent = `Key: ${userKey} - Masukkan token`;
+        }
+
+        document.getElementById('verifyBtn').onclick = async function() {
+            const token = document.getElementById('tokenInput').value.trim();
+            const btn = this;
+            const status = document.getElementById('status');
+            
+            if (!token) {
+                showStatus('Masukkan token!', 'error');
+                return;
+            }
+
+            if (!userId || !userKey) {
+                showStatus('Data user tidak lengkap', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+            showStatus('Mengirim ke API...', 'loading');
+
+            try {
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, userKey, token })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('✅ Token verified! Mengaktifkan bot...', 'success');
+                    btn.textContent = 'Verified!';
+                    
+                    // Send data to bot
+                    tg.sendData(JSON.stringify({
+                        action: 'token_verified',
+                        userId: userId,
+                        key: userKey,
+                        token: token
+                    }));
+                    
+                    setTimeout(() => tg.close(), 2000);
+                } else {
+                    showStatus(`❌ ${result.message}`, 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Verify Token';
+                }
+            } catch (error) {
+                showStatus('❌ Network error', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Verify Token';
+            }
+        };
+
+        function showStatus(msg, type) {
+            const status = document.getElementById('status');
+            status.textContent = msg;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
