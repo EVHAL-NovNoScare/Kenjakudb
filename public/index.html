@@ -96,43 +96,38 @@ document.getElementById('keyText').innerHTML = `
 document.getElementById('verifyBtn').onclick = async function() {
     const inputToken = document.getElementById('tokenInput').value.trim();
     
-    if (!inputToken) {
-        alert("Masukkan token dulu!");
-        return;
-    }
-
-    console.log("🚀 Mengirim ke API...", { 
-        userId: userId, 
-        userKey: userKey, 
-        token: inputToken 
+    console.log("🔧 Data yang dikirim:", {
+        userId: "6209084400",
+        userKey: "CLARISA-001", 
+        token: inputToken
     });
 
     try {
-        const response = await fetch('https://kenjakudatabaseapi.vercel.app/api/verify', {
-            method: 'POST',
+        // ✅ PASTIKAN METHOD = POST
+        const response = await fetch('/api/verify', {
+            method: 'POST', // ← INI YANG PENTING
             headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                userId: userId,
-                userKey: userKey, 
+                userId: "6209084400",
+                userKey: "CLARISA-001",
                 token: inputToken
             })
         });
 
         const result = await response.json();
-        console.log("📡 Response API:", result);
+        console.log("📡 Response:", result);
 
         if (result.success) {
-            alert(`✅ BERHASIL! ${result.message}`);
+            alert("✅ TOKEN VALID! Bot bisa digunakan.");
         } else {
-            alert(`❌ GAGAL: ${result.message}`);
+            alert(`❌ ${result.message}`);
         }
 
     } catch (error) {
-        console.error("💥 Error:", error);
-        alert("❌ Network error! Coba lagi.");
+        console.error("Error:", error);
+        alert("❌ Gagal connect ke API");
     }
 };
         }
